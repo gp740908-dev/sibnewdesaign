@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
-import { Finale } from '@/components/Finale'; // FIXED: Changed from '../../components/Finale'
+import { Finale } from '@/components/Finale';
 
 // --- Mock Data ---
 const categories = ["All", "Culture", "Culinary", "Design", "Wellness", "People"];
@@ -68,6 +68,7 @@ const journalEntries = [
 export default function JournalPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [cursorVisible, setCursorVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false); // FIXED: Added for SSR safety
 
   // Mouse Physics for Custom Cursor
   const mouseX = useMotionValue(0);
@@ -75,6 +76,11 @@ export default function JournalPage() {
   
   const cursorX = useSpring(mouseX, { stiffness: 400, damping: 30 });
   const cursorY = useSpring(mouseY, { stiffness: 400, damping: 30 });
+
+  // FIXED: Mount check for client-side only code
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     mouseX.set(e.clientX);
@@ -121,8 +127,8 @@ export default function JournalPage() {
       <div className="h-32 w-full" />
       <Finale />
 
-      {/* Custom 'READ' Cursor */}
-      {createPortal(
+      {/* Custom 'READ' Cursor - FIXED: Only render on client */}
+      {isMounted && createPortal(
           <motion.div
             className="fixed top-0 left-0 z-[100] pointer-events-none"
             style={{
@@ -215,10 +221,8 @@ const JournalCard = ({ entry, index, onHoverStart, onHoverEnd }: { entry: any, i
         offset: ["start end", "end start"]
     });
 
-    // Parallax Effect: Image moves slower than scroll
     const y = useTransform(scrollYProgress, [0, 1], ["-10%", "10%"]);
 
-    // Determine grid classes based on 'span'
     const gridClasses = useMemo(() => {
         switch (entry.span) {
             case "featured": return "col-span-1 md:col-span-12";
@@ -230,7 +234,6 @@ const JournalCard = ({ entry, index, onHoverStart, onHoverEnd }: { entry: any, i
         }
     }, [entry.span]);
 
-    // Conditional Layout for Featured Item
     if (entry.span === "featured") {
         return (
             <motion.div 
@@ -241,7 +244,6 @@ const JournalCard = ({ entry, index, onHoverStart, onHoverEnd }: { entry: any, i
                 transition={{ duration: 0.8, delay: index * 0.1 }}
                 className={`${gridClasses} flex flex-col md:flex-row gap-8 md:gap-16 group cursor-pointer mb-12 md:mb-24`}
             >
-                {/* Featured Image (Left) */}
                 <div 
                     className="w-full md:w-[60%] aspect-[4/3] md:aspect-[16/9] overflow-hidden relative"
                     onMouseEnter={onHoverStart}
@@ -258,7 +260,6 @@ const JournalCard = ({ entry, index, onHoverStart, onHoverEnd }: { entry: any, i
                     </motion.div>
                 </div>
 
-                {/* Featured Text (Right) */}
                 <div className="w-full md:w-[40%] flex flex-col justify-center gap-6">
                     <div className="flex items-center gap-4 font-sans text-xs tracking-[0.2em] uppercase opacity-60">
                         <span>{entry.category}</span>
@@ -282,7 +283,6 @@ const JournalCard = ({ entry, index, onHoverStart, onHoverEnd }: { entry: any, i
         );
     }
 
-    // Standard Layout (Vertical Stack)
     return (
         <motion.div 
             ref={ref}
@@ -307,7 +307,6 @@ const JournalCard = ({ entry, index, onHoverStart, onHoverEnd }: { entry: any, i
                     />
                 </motion.div>
                 
-                {/* Full Width Overlay Logic (Optional for 'full' span items) */}
                 {entry.span === 'full' && (
                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500" />
                 )}

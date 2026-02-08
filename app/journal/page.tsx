@@ -3,7 +3,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
-import { Finale } from '../../components/Finale';
+import { Finale } from '@/components/Finale'; // FIXED: Changed from '../../components/Finale'
 
 // --- Mock Data ---
 const categories = ["All", "Culture", "Culinary", "Design", "Wellness", "People"];

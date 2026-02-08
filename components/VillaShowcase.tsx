@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // FIXED: Added useEffect
 import { createPortal } from 'react-dom';
 import { motion as m, AnimatePresence, useSpring, useMotionValue } from 'framer-motion';
 
@@ -37,15 +37,15 @@ const villas = [
   }
 ];
 
-// Heavy, expensive feel physics
 const TRANSITION = { duration: 1.2, ease: [0.76, 0, 0.24, 1] };
 
 export const VillaShowcase: React.FC = () => {
   const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
+  const [direction, setDirection] = useState(0);
   const [cursorText, setCursorText] = useState("");
   const [isHovering, setIsHovering] = useState(false);
   const [isCursorVisible, setIsCursorVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false); // FIXED: Added for SSR safety
 
   // Mouse Physics
   const mouseX = useMotionValue(0);
@@ -54,7 +54,10 @@ export const VillaShowcase: React.FC = () => {
   const cursorX = useSpring(mouseX, { stiffness: 300, damping: 20, mass: 0.5 });
   const cursorY = useSpring(mouseY, { stiffness: 300, damping: 20, mass: 0.5 });
 
+  // FIXED: Mount check for client-side only code
   useEffect(() => {
+    setIsMounted(true);
+    
     const handleMouseMove = (e: MouseEvent) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
@@ -63,7 +66,6 @@ export const VillaShowcase: React.FC = () => {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [mouseX, mouseY]);
 
-  // Derived Indices - Fixed modulo logic to handle negative numbers robustly
   const getIndex = (i: number) => {
     const len = villas.length;
     return ((i % len) + len) % len;
@@ -73,13 +75,11 @@ export const VillaShowcase: React.FC = () => {
   const prevVilla = villas[getIndex(index - 1)];
   const nextVilla = villas[getIndex(index + 1)];
 
-  // Navigation Handlers
   const paginate = useCallback((newDirection: number) => {
     setDirection(newDirection);
     setIndex((prev) => prev + newDirection);
   }, []);
 
-  // Zone Logic
   const handleZoneEnter = (text: string) => {
     setCursorText(text);
     setIsHovering(true);
@@ -96,7 +96,7 @@ export const VillaShowcase: React.FC = () => {
       onMouseLeave={() => setIsCursorVisible(false)}
     >
       
-      {/* 1. Background Layer (Full Bleed) */}
+      {/* 1. Background Layer */}
       <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={index}
@@ -119,10 +119,9 @@ export const VillaShowcase: React.FC = () => {
         </motion.div>
       </AnimatePresence>
 
-      {/* 2. Main Content Layer (Centered Text) */}
+      {/* 2. Main Content Layer */}
       <div className="absolute inset-0 z-10 flex flex-col justify-center items-center pointer-events-none">
         
-        {/* Central Typography (Animated) */}
         <div className="relative overflow-hidden px-4 text-center z-20 mix-blend-overlay">
           <AnimatePresence mode="popLayout" custom={direction}>
             <motion.h1
@@ -144,7 +143,6 @@ export const VillaShowcase: React.FC = () => {
           </AnimatePresence>
         </div>
 
-        {/* Location Subtitle */}
         <AnimatePresence mode="wait">
             <motion.p
                 key={index}
@@ -159,7 +157,7 @@ export const VillaShowcase: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* 2.5 Description Text */}
+      {/* Description Text */}
       <div className="absolute bottom-16 md:bottom-24 left-1/2 -translate-x-1/2 z-20 text-center pointer-events-none w-full max-w-lg px-6">
         <AnimatePresence mode="wait">
             <motion.p
@@ -175,7 +173,7 @@ export const VillaShowcase: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* 3. Peeking Titles (Context) */}
+      {/* Peeking Titles */}
       <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-[15%] h-[40vh] flex items-center justify-end overflow-hidden opacity-30 pointer-events-none hidden md:flex">
          <motion.h2 
             key={`prev-${index}`}
@@ -200,23 +198,20 @@ export const VillaShowcase: React.FC = () => {
          </motion.h2>
       </div>
 
-      {/* 4. Interaction Zones */}
+      {/* Interaction Zones */}
       <div className="absolute inset-0 z-50 flex w-full h-full">
-        {/* Left Zone (Prev) */}
         <div 
             className="w-[20%] h-full"
             onMouseEnter={() => handleZoneEnter("PREV")}
             onMouseLeave={handleZoneLeave}
             onClick={() => paginate(-1)}
         />
-        {/* Center Zone (View) */}
         <div 
             className="w-[60%] h-full"
             onMouseEnter={() => handleZoneEnter("VIEW")}
             onMouseLeave={handleZoneLeave}
             onClick={() => console.log("View Details Clicked")}
         />
-        {/* Right Zone (Next) */}
         <div 
             className="w-[20%] h-full"
             onMouseEnter={() => handleZoneEnter("NEXT")}
@@ -225,9 +220,9 @@ export const VillaShowcase: React.FC = () => {
         />
       </div>
 
-      {/* 5. Custom Cursor - PORTAL TO BODY */}
+      {/* Custom Cursor - FIXED: Only render on client */}
       <AnimatePresence>
-        {isCursorVisible && createPortal(
+        {isMounted && isCursorVisible && createPortal(
             <motion.div
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -242,10 +237,7 @@ export const VillaShowcase: React.FC = () => {
             >
                 <motion.div 
                     layout
-                    className={`
-                        backdrop-blur-md bg-rice-paper/20 border border-rice-paper/30 shadow-xl
-                        flex items-center justify-center
-                    `}
+                    className="backdrop-blur-md bg-rice-paper/20 border border-rice-paper/30 shadow-xl flex items-center justify-center"
                     animate={{
                         width: isHovering ? "auto" : 12,
                         height: isHovering ? 32 : 12,

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useMemo } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { Finale } from '../../components/Finale';
+import { Finale } from '@/components/Finale'; // FIXED: Using path alias
 
 // --- Mock Data ---
 const categories = ["All", "Jungle View", "Riverfront", "Private Pool", "Estate"];

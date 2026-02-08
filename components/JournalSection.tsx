@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react'; // FIXED: Added useEffect
 import { createPortal } from 'react-dom';
 import { motion as m, useMotionValue, useSpring } from 'framer-motion';
 
@@ -42,6 +42,7 @@ const articles = {
 
 export const JournalSection: React.FC = () => {
   const [cursorVisible, setCursorVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false); // FIXED: Added for SSR safety
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Mouse Physics for Custom Cursor
@@ -51,9 +52,12 @@ export const JournalSection: React.FC = () => {
   const cursorX = useSpring(mouseX, { stiffness: 400, damping: 30 });
   const cursorY = useSpring(mouseY, { stiffness: 400, damping: 30 });
 
+  // FIXED: Mount check for client-side only code
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const handleMouseMove = (e: React.MouseEvent) => {
-    // We can rely on React's synthetic event here because createPortal 
-    // puts the cursor in the body, but coordinates are still viewport relative.
     mouseX.set(e.clientX);
     mouseY.set(e.clientY);
   };
@@ -157,8 +161,8 @@ export const JournalSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Custom 'READ' Cursor - PORTAL */}
-      {createPortal(
+      {/* Custom 'READ' Cursor - FIXED: Only render on client */}
+      {isMounted && createPortal(
           <motion.div
             className="fixed top-0 left-0 z-50 pointer-events-none"
             style={{

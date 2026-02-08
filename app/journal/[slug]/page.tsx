@@ -2,7 +2,7 @@
 
 import React, { useRef } from 'react';
 import { motion, useScroll, useTransform, useSpring, Variants } from 'framer-motion';
-import { Finale } from '../../components/Finale'; // Adjust path for nested route
+import { Finale } from '@/components/Finale'; // FIXED: Changed from '../../components/Finale'
 
 // --- Mock Editorial Content ---
 const articleData = {
@@ -121,10 +121,6 @@ const ArticleHero = ({ data }: { data: typeof articleData }) => {
             </div>
 
             {/* Overlapping Title Area */}
-            {/* We position relative z-10 so it sits on top. 
-                Negative margin-bottom pulls the next section underneath if needed, 
-                but here we want the title to visually breach the fold. 
-            */}
             <div className="relative z-10 w-full max-w-[90vw] mx-auto translate-y-16 md:translate-y-24 mix-blend-normal">
                  <div className="flex flex-col gap-6">
                     {/* Meta */}
@@ -234,7 +230,7 @@ const ContentBlock = ({ block, index }: { block: any, index: number }) => {
                     </motion.div>
                     <motion.div
                         initial={{ opacity: 0, y: 100 }}
-                        whileInView={{ opacity: 1, y: 50 }} // Stays offset
+                        whileInView={{ opacity: 1, y: 50 }}
                         viewport={{ once: true }}
                         transition={{ duration: 1, delay: 0.2 }}
                         className="md:mt-24"

@@ -220,10 +220,12 @@ export const VillaShowcase: React.FC = () => {
         />
       </div>
 
-      {/* Custom Cursor - FIXED: Only render on client */}
-      <AnimatePresence>
-        {isMounted && isCursorVisible && createPortal(
+      {/* Custom Cursor - FIXED: AnimatePresence must be INSIDE the portal */}
+      {isMounted && createPortal(
+        <AnimatePresence>
+          {isCursorVisible && (
             <motion.div
+                key="villa-cursor"
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
@@ -261,10 +263,11 @@ export const VillaShowcase: React.FC = () => {
                         )}
                     </AnimatePresence>
                 </motion.div>
-            </motion.div>,
-            document.body
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <style>{`
         .stroke-text {
